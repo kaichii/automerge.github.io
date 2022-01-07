@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://automerge.com/blog</id>
+    <id>https://automerge.github.io/docs/blog</id>
     <title>Build local-first software Blog</title>
     <updated>2022-01-05T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://automerge.com/blog"/>
+    <link rel="alternate" href="https://automerge.github.io/docs/blog"/>
     <subtitle>Build local-first software Blog</subtitle>
-    <icon>https://automerge.com/img/favicon.ico</icon>
+    <icon>https://automerge.github.io/docs/img/favicon.ico</icon>
     <entry>
         <title type="html"><![CDATA[Welcome]]></title>
         <id>welcome</id>
-        <link href="https://automerge.com/blog/welcome"/>
+        <link href="https://automerge.github.io/docs/blog/welcome"/>
         <updated>2022-01-05T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[You've reached the automerge docs! We're so happy to have you.]]></summary>
         <content type="html"><![CDATA[<p>You&#x27;ve reached the automerge docs! We&#x27;re so happy to have you.</p><p>We&#x27;re using docasaurus. Please help edit the docs on <a href="https://github.com/automerge/docs">GitHub</a></p>]]></content>

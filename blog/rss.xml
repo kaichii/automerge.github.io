@@ -2,14 +2,14 @@
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>Build local-first software Blog</title>
-        <link>https://automerge.com/blog</link>
+        <link>https://automerge.github.io/docs/blog</link>
         <description>Build local-first software Blog</description>
         <lastBuildDate>Wed, 05 Jan 2022 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <item>
             <title><![CDATA[Welcome]]></title>
-            <link>https://automerge.com/blog/welcome</link>
+            <link>https://automerge.github.io/docs/blog/welcome</link>
             <guid>welcome</guid>
             <pubDate>Wed, 05 Jan 2022 00:00:00 GMT</pubDate>
             <description><![CDATA[You've reached the automerge docs! We're so happy to have you.]]></description>
