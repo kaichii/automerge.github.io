@@ -13,7 +13,7 @@
             <guid>welcome</guid>
             <pubDate>Wed, 05 Jan 2022 00:00:00 GMT</pubDate>
             <description><![CDATA[You've reached the automerge docs! We're so happy to have you.]]></description>
-            <content:encoded><![CDATA[<p>You&#x27;ve reached the automerge docs! We&#x27;re so happy to have you.</p><p>We&#x27;re using docasaurus. Please help edit the docs on <a href="https://github.com/automerge/docs">GitHub</a></p>]]></content:encoded>
+            <content:encoded><![CDATA[<p>You&#x27;ve reached the automerge docs! We&#x27;re so happy to have you.</p><p>We&#x27;re using docasaurus. Please help edit the docs on <a href="https://github.com/automerge/github.io">GitHub</a>.</p>]]></content:encoded>
         </item>
     </channel>
 </rss>
