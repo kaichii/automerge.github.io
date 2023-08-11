@@ -6,124 +6,114 @@ import Bundlers from "@site/src/components/Bundlers";
 
 # 5-Minute Quick Start
 
-This guide will get you up and running with Automerge in a JavaScript or TypeScript application. This guide is recommended for you if you have strong understanding of JavaScript fundamentals and CRDTs. If you find this quick start to be complicated, we recommend trying the [Tutorial](/docs/tutorial/introduction/) section.
-
+This guide will get you up and running with Automerge in a JavaScript or TypeScript application. 
 
 ## Setup
 
-Installation from [npm](https://www.npmjs.com/package/automerge), using Node.js:
+Install [automerge-repo](https://www.npmjs.com/package/@automerge/automerge-repo) from npm:
 
 ```bash
-npm install @automerge/automerge ## or yarn add @automerge/automerge
+npm install @automerge/automerge-repo ## or yarn add @automerge/automerge-repo
 ```
 
 Then load the library as follows:
 
 ```js
-const Automerge = require('@automerge/automerge')
+const AutomergeRepo = require("@automerge/automerge-repo")
 ```
 
 If you are using ES2015 or TypeScript, import the library like this:
 
 ```typescript
-import * as Automerge from '@automerge/automerge'
+import * as AutomergeRepo from '@automerge/automerge-repo'
 ```
 
 If you are in a browser you will need to setup a bundler to load WebAssembly modules, examples for three common examples are given below (more detailed working examples available [in the repo](https://github.com/automerge/automerge-rs/tree/main/javascript/examples)):
 
 <Bundlers />
 
+## Initializing a repository
+
+The recommended way to use automerge is via a `Repo`. This is an object which will manage storing and synchronizing automerge documents with other processes. Here we create a repository which doesn't connect to any other repositories and doesn't store anything:
+
+```js
+const repo = new AutomergeRepo.Repo({
+  network: [new BrowserWebSocketClientAdapter("ws://sync.automerge.org")],
+})
+```
+
+This uses the public sync server at `sync.automerge.org`, but you can use anything which implements `NetworkAdapter`. For example there is an implementation for [the channel Messaging API](https://developer.mozilla.org/en-US/docs/Web/API/Channel_Messaging_API) to communicate between tabs.
+
 
 ## Creating a document
 
-Let's say doc1 is the application state on device 1. Further down we'll simulate a second device. We initialize the document to initially contain an empty list of cards.
+Let's say doc1 is the application state on device 1. Further down we'll simulate a second device. We initialize the document to contain a list of "cards":
 
 ```js
-let doc1 = Automerge.init()
+let doc1 = repo.create()
 ```
 
-Automerge follows good functional programming practice. The `doc1` object is treated as immutable -- you  never change it directly. To change it, you need to call `Automerge.change()` with a callback in which you can mutate the state. 
-
-
-## Making changes
+`doc1` is a `DocHandle`, to modify it you call `DocHandle.change`
 
 ```js
-doc1 = Automerge.change(doc1, 'Add card', doc => {
-  doc.cards = []
-  doc.cards.push({ title: 'Rewrite everything in Clojure', done: false })
-  doc.cards.push({ title: 'Rewrite everything in Haskell', done: false })
+doc1.change(d => {
+  d.cards = []
+  d.cards.push({ title: 'Rewrite everything in Clojure', done: false })
+  d.cards.push({ title: 'Rewrite everything in Haskell', done: false })
 })
+
+// `docSync` gets the value of the dochandle synchronously
+console.log(doc1.docSync())
 // { cards: [
 //    { title: 'Rewrite everything in Clojure', done: false },
 //    { title: 'Rewrite everything in Haskell', done: false } ]}
+
+// Take a note of this, we'll use it later
+console.log(doc1.url)
 ```
 
-`Automerge.change(doc, [message], changeFn)` enables you to modify an Automerge document `doc`,
-returning an updated copy of the document.
+`DocHandle.change` allows you to modify the document managed by a `DocHandle` and takes care of storing new changes and notifying any peers of new changes.
 
-The `message` argument is optional. It allows you to attach an arbitrary string to the change, which is not interpreted by Automerge, but saved as part of the change history.
+The `DocHandle.docSync()` method gets the current value of the document synchronously or throws an error if the document is not ready. A document might not be ready if you are in the process of requesting it from the network, in which case you might use `await doc1.value()` to get the value asynchronously. In this case we created the document using `Repo.create`, so we know it is ready.
 
-The `doc1` returned by `Automerge.change()` is a regular JavaScript object containing all the
-edits you made in the callback. Any parts of the document that you didn't change are carried over
-unmodified. The only special things about it are:
+## Collaborating with peers
 
-  - It is treated as immutable, so all changes must go through `Automerge.change()`.
-  - Every object has a unique ID, which you can get by passing the object to the
-    `Automerge.getObjectId()` function. This ID is used by Automerge to track which object is which.
-  - Objects also have information about _conflicts_, which is used when several users make changes to
-    the same property concurrently (see [conflicts](/docs/cookbook/conflicts/)). 
-
-## Merging documents
-
-Now let's simulate another device, whose application state is `doc2`. We must
-initialise it separately, and merge `doc1` into it. After merging, `doc2` is a replicated copy of `doc1`.
+The handle we have created has a URL, we can access that with `DocHandle.url`. Now, in a second process (such as in another tab) we can do this:
 
 ```js
-let doc2 = Automerge.init()
-doc2 = Automerge.merge(doc2, doc1)
-```
-
-You can also load the document as a binary, if you want to send the document over the network in a compact format, or if you want to save the document to disk.
-
-```js
-let binary = Automerge.save(doc1)
-let doc2 = Automerge.load(binary)
-```
-
-Now, when both documents are ready, we make separate (non-conflicting) changes. For handling conflicting changes, see the section on [conflicts](/docs/cookbook/conflicts/).
-
-```js
-doc1 = Automerge.change(doc1, 'Mark card as done', doc => {
-  doc.cards[0].done = true
+const repo = new AutomergeRepo.Repo({
+  network: [new BrowserWebSocketClientAdapter("ws://sync.automerge.org")],
 })
-doc2 = Automerge.change(doc2, 'Delete card', doc => {
-  delete doc.cards[1]
+const doc = repo.find(<url copied from the previous example>)
+console.log(await doc.value()) // Prints the same contents as in the previous snippet
+```
+
+And we can make changes
+
+```js
+doc.change(d => {
+  d.cards[0].done = true
 })
 ```
 
-Now comes the moment of truth. Let's merge the changes again. You can also do the merge the other way around, and you'll get the same result. Order doesn't matter here. The merged result remembers that 'Rewrite everything in Clojure' was set to true, and that 'Rewrite everything in Haskell' was deleted:
+This change will be reflected in any connected and listening handles.
+
+## Saving the document
+
+If you provide a `Repo` with a `StorageAdapter` then it will save documents for use later. In the browser we might used IndexedDB:
 
 ```js
-let finalDoc = Automerge.merge(doc1, doc2)
-// { cards: [ { title: 'Rewrite everything in Clojure', done: true } ] }
+import { IndexedDBStorageAdapter } from "@automerge/automerge-repo-storage-indexeddb"
+import { BrowserWebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket"
+
+const repo = new AutomergeRepo.Repo({
+  network: [new BrowserWebSocketClientAdapter("ws://sync.automerge.org")],
+  storage: new IndexedDBStorageAdapter(),
+})
 ```
 
-## Get change history
+Documents will be stored in `IndexedDB` and methods like `Repo.find` will consult storage when loading. The upshot is that if you had a document locally, it will continue to be available regardless of whether you are connected to any peers.
 
-
-As our final trick, we can inspect the change history. Automerge automatically
-keeps track of every change, along with the "commit message" that you passed to
-change(). When you query that history, it includes both changes you made
-locally, and also changes that came from other devices. You can also see a
-snapshot of the application state at any moment in time in the past. For
-example, we can count how many cards there were at each point:
-
-```js
-Automerge.getHistory(finalDoc).map(state => [state.change.message, state.snapshot.cards.length])
-// [ [ 'Add card', 2 ],
-//   [ 'Mark card as done', 2 ],
-//   [ 'Delete card', 1 ] ]
-```
 
 ## More
 

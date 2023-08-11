@@ -26,13 +26,14 @@ function render(doc) {
 }
 ```
 
-Next, let's change the `updateDoc()` function to re-render the todo list every time the Automerge document is updated:
+Next, we listen for changes to the `DocHandle`, every time a change happens we re-render
+
 
 ```js
-function updateDoc(newDoc) {
-  doc = newDoc
-  render(newDoc)
-}
+// Once we've loaded the doc using
+doc.on("change", d => {
+  render(d)
+})
 ```
 
 Now you should be able to type something in the text box, hit enter, and you should see it appear on the list!
@@ -44,10 +45,9 @@ Now, your turn. Write the next function we will need: to mark a todo as complete
 
 ```js
 function toggle(index) {
-  let newDoc = Automerge.change(doc, (doc) => {
+  doc.change(doc => {
     // your code here
   })
-  updateDoc(newDoc)
 }
 ```
 
@@ -55,14 +55,14 @@ Then, attach this function to the DOM `itemEl.onclick` event.
 
 **Hints**
 
-You can use `doc.items[index]` to get the value of the item in the list. This value can be manipulated inside a call to `Automerge.change`.
+You can use `doc.items[index]` to get the value of the item in the list. This value can be manipulated inside a call to `DocHandle.change`.
 
 You cannot use `...` when updating a Automerge document. For example, the following **will not work**:
 
 ```js
-Automerge.change(doc, doc => {
+doc.change(doc => {
   doc.items = [...doc.items, toggledItem] // This will overwrite doc.items with a new copy; automerge won't know what actually changed
 })
 ```
 
-Instead, to add an item to a list, you need to use `doc.items.push(item)` inside `Automerge.change` to add to the end of the list. You can also use `doc.items.unshift(item)` to add an item to the beginning, or `doc.items.insertAt(index, item)` to add an item at any index. For more information, see [the documentation for lists](/docs/types/lists).
+Instead, to add an item to a list, you need to use `doc.items.push(item)` inside `DocHandle.change` to add to the end of the list. You can also use `doc.items.unshift(item)` to add an item to the beginning, or `doc.items.insertAt(index, item)` to add an item at any index. For more information, see [the documentation for lists](/docs/types/lists).

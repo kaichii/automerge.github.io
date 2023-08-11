@@ -16,7 +16,7 @@ Today, you will build a simple to-do-list app with plain JavaScript. The resulti
 
 * Modeling application state using an Automerge document
 * Making changes to documents
-* Persisting state in IndexedDB to preserve the document after restarting the browser tab (using [localForage](https://localforage.github.io/localForage/))
+* Persisting state in IndexedDB to preserve the document after restarting the browser tab
 * Supporting real-time collaboration in the same browser (using [BroadcastChannel](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel))
 
 ## Setup
@@ -70,12 +70,19 @@ Create a `public/index.html` file that contains the following:
 </html>
 ```
 
-Create a `src/index.js` file. In this file, we will create our first document:
+Create a `src/index.js` file. In this file, we will initialize a repository connected to the public automerge sync server and storing data in `IndexedDB`.
 
 ```javascript
-import * as Automerge from "@automerge/automerge"
-let doc = Automerge.init()
-console.log(doc)
+import { Repo } from "@automerge/automerge-repo"
+import { IndexedDBStorageAdapter } from "@automerge/automerge-repo-storage-indexeddb"
+import { BrowserWebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket"
+
+const repo = new Repo({
+  storage: new IndexedDBStorageAdapter(),
+  network: [new BrowserWebSocketClientAdapter("wss://sync.automerge.org")],
+  peerId: ("browser-" + Math.round(Math.random() * 10000)) as any,
+  sharePolicy: async peerId => peerId.includes("storage-server"),
+})
 ```
 
 Now run `yarn webpack serve` and go to `http://localhost:8080`
