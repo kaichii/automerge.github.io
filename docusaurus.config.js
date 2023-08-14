@@ -115,6 +115,7 @@ const config = {
         [
             "docusaurus-plugin-typedoc",
             {
+                id: "automerge",
                 entryPoints: ["./automerge/javascript/src/index.ts"],
                 tsconfig: "./automerge/javascript/config/declonly.json",
                 readme: "none",
@@ -123,6 +124,21 @@ const config = {
                     categoryLabel: "API Docs",
                     position: 6,
                     indexLabel: "Overview"
+                }
+            },
+        ],
+        [
+            "docusaurus-plugin-typedoc",
+            {
+                id: "automerge-repo",
+                entryPoints: ["./automerge-repo/packages/automerge-repo/src/index.ts"],
+                tsconfig: "./automerge-repo/packages/automerge-repo/tsconfig.json",
+                readme: "none",
+                out: "tsapi",
+                sidebar: {
+                    categoryLabel: "Automerge Repo API Docs",
+                    position: 7,
+                    indexLabel: "Automerge Repo"
                 }
             }
         ]
