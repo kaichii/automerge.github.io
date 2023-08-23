@@ -2,81 +2,190 @@
 sidebar_position: 1
 ---
 
-import Bundlers from "@site/src/components/Bundlers";
-
 # 5-Minute Quick Start
 
-This guide will get you up and running with Automerge in a JavaScript or TypeScript application. 
+It's easy to build a local-first web application with real-time synchronization using Automerge. In this quickstart, we'll start with the standard `yarn create vite` example Typescript application and use Automerge to turn it into a simple local-first application.
+
+Let's begin.
 
 ## Setup
 
-Install [automerge-repo](https://www.npmjs.com/package/@automerge/automerge-repo) from npm:
+First, let's initialize an off-the-shelf React app using Vite as our bundler. We're not going to remind you along the way, but we recommend you initialize a git repo and check in the code at whatever interval feels comfortable.
+
+```bash 
+$ yarn create vite
+# Project name: hello-automerge-repo
+# Select a framework: React
+# Select a variant: TypeScript
+
+$ cd hello-automerge-repo
+$ yarn
+```
+
+Next, we'll add some automerge dependencies for the project. We'll introduce each of these libraries as they come up in the tutorial.
 
 ```bash
-npm install @automerge/automerge-repo ## or yarn add @automerge/automerge-repo
+yarn add @automerge/automerge-repo @automerge/automerge-repo-react-hooks @automerge/automerge-repo-network-broadcastchannel @automerge/automerge-repo-storage-indexeddb vite-plugin-wasm
 ```
 
-Then load the library as follows:
+Note, part of Automerge is delivered by WebAssembly. This technology has been around since 2017 but browser module import syntax still varies between bundlers. We're using `vite-plugin-wasm` to teach Vite how to import WebAssembly modules, but we also need to do a little extra setup in a config file.
 
-```js
-const AutomergeRepo = require("@automerge/automerge-repo")
-```
-
-If you are using ES2015 or TypeScript, import the library like this:
+Hold your nose and paste this into a file at the root of the project called `vite.config.ts`. We'll all look forward to removing this file in the future.
 
 ```typescript
-import * as AutomergeRepo from '@automerge/automerge-repo'
+// vite.config.ts
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import wasm from "vite-plugin-wasm"
+
+export default defineConfig({
+  plugins: [wasm(), react()],
+
+  worker: {
+    format: "es",
+    plugins: [wasm()],
+  },
+
+  optimizeDeps: {
+    // This is necessary because otherwise `vite dev` includes two separate
+    // versions of the JS wrapper. This causes problems because the JS
+    // wrapper has a module level variable to track JS side heap
+    // allocations, and initializing this twice causes horrible breakage
+    exclude: [
+      "@automerge/automerge-wasm",
+      "@automerge/automerge-wasm/bundler/bindgen_bg.wasm",
+      "@syntect/wasm",
+    ],
+  },
+})
 ```
 
-If you are in a browser you will need to setup a bundler to load WebAssembly modules, examples for three common examples are given below (more detailed working examples available [in the repo](https://github.com/automerge/automerge-rs/tree/main/javascript/examples)):
+With that out of the way, we're ready to build the application.
 
-<Bundlers />
+# Using Automerge
+
+The central concept of Automerge is one of documents. An Automerge document is a JSON-like data structure that is kept synchronized between all communicating peers with the same document ID.
+
+To create or find Automerge documents, we'll use a Repo. The Repo (short for repository) keeps track of all the documents you load and makes sure they're properly synchronized and stored. Let's go ahead and make one. Add the following imports to `src/main.tsx`:
+
+```typescript
+import { Repo } from '@automerge/automerge-repo'
+import { BroadcastChannelNetworkAdapter } from '@automerge/automerge-repo-network-broadcastchannel'
+import { IndexedDBStorageAdapter } from "@automerge/automerge-repo-storage-indexeddb"
+```
+
+Next, 
 
 ## Initializing a repository
 
-The recommended way to use automerge is via a `Repo`. This is an object which will manage storing and synchronizing automerge documents with other processes. Here we create a repository which doesn't connect to any other repositories and doesn't store anything:
+Before we can start finding or creating documents, we'll need a repo. Here, we create one that can synchronize with other tabs using a sort of pseudo-network built into the browser that allows communication between tabs with the same shared origin: the BroadcastChannel.
 
 ```js
-const repo = new AutomergeRepo.Repo({
-  network: [new BrowserWebSocketClientAdapter("ws://sync.automerge.org")],
+const repo = new Repo({
+  network: [new BroadcastChannelNetworkAdapter()],
+  storage: new IndexedDBStorageAdapter(),
 })
 ```
 
-This uses the public sync server at `sync.automerge.org`, but you can use anything which implements `NetworkAdapter`. For example there is an implementation for [the channel Messaging API](https://developer.mozilla.org/en-US/docs/Web/API/Channel_Messaging_API) to communicate between tabs.
+## Creating (or finding) a document
 
+Now that we have the repo, we want to either create a document if we don't have one already or we want to load a document. To keep things simple, we'll check the URL hash for a document ID, and if we don't find one, we'll start a new document and set it in the hash.
 
-## Creating a document
-
-Let's say doc1 is the application state on device 1. Further down we'll simulate a second device. We initialize the document to contain a list of "cards":
-
-```js
-let doc1 = repo.create()
+```typescript
+const rootDocUrl = `${document.location.hash.substr(1)}`
+const handle = isValidAutomergeUrl(rootDocUrl) ? repo.find(rootDocUrl) : repo.create()
+const docUrl = document.location.hash = handle.url
+window.handle = handle // we'll use this later for experimentation
 ```
 
-`doc1` is a `DocHandle`, to modify it you call `DocHandle.change`
+(Your application will probably handle routing differently, but this is enough to get started.)
 
-```js
-doc1.change(d => {
-  d.cards = []
-  d.cards.push({ title: 'Rewrite everything in Clojure', done: false })
-  d.cards.push({ title: 'Rewrite everything in Haskell', done: false })
-})
+## Working with the document
 
-// `docSync` gets the value of the dochandle synchronously
-console.log(doc1.docSync())
-// { cards: [
-//    { title: 'Rewrite everything in Clojure', done: false },
-//    { title: 'Rewrite everything in Haskell', done: false } ]}
+The main way of interacting with a Repo is through `DocHandles`, which allow you to read data from a document or make changes to it and which emit `"change"` events whenever the document changes -- either through local actions or over the network.
 
-// Take a note of this, we'll use it later
-console.log(doc1.url)
+Because we just created this document, it won't have any data in it. Let's start by initializing a counter. Run the following command in your Chrome debugger.
+
+```typescript
+handle.change(d => { d.counter = 10 })
 ```
 
 `DocHandle.change` allows you to modify the document managed by a `DocHandle` and takes care of storing new changes and notifying any peers of new changes.
 
-The `DocHandle.docSync()` method gets the current value of the document synchronously or throws an error if the document is not ready. A document might not be ready if you are in the process of requesting it from the network, in which case you might use `await doc1.value()` to get the value asynchronously. In this case we created the document using `Repo.create`, so we know it is ready.
+Next, run this code to see the contents of your document.
 
-## Collaborating with peers
+```typescript
+handle.docSync()
+```
+
+The `DocHandle.docSync()` method gets the current value of the document synchronously or throws an error if the document is not ready. A document might not be ready if you are in the process of requesting it from the network, in which case you might use `await doc1.doc()` to get the value asynchronously. In this case we created the document using `Repo.create`, so we know it is ready.
+
+## Updating your app to use Automerge
+
+We've already created or fetched our initial document via `main.tsx`, but usually when when we want to work with a document in a React application, we will refer to it by URL. Let's start by editing the call signature for `App.tsx` to pass in the URL for your newly created document, and then make it available to your component with the `useDocument` hook.
+
+In `main.tsx`, modify the `React.render()` call to look like this:
+
+```typescript
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <RepoContext.Provider value={repo}>
+      <App docUrl={docUrl}/>
+    </RepoContext.Provider>
+  </React.StrictMode>,
+)
+```
+
+and also add another import line:
+
+```typescript
+import { RepoContext } from '@automerge/automerge-repo-react-hooks'
+```
+
+Inside `App.tsx`, change the first few lines to these:
+
+```typescript
+interface CounterDoc {
+  count: number
+}
+
+function App(docUrl: AutomergeUrl) {
+  const [doc, changeDoc] = useDocument<CounterDoc>(docUrl)
+```
+
+Now you've got access to the document in a more native React-style way: a hook that will update every time the document changes.
+
+Our last step here is to change our code to use these new values by replacing how we render the `button` element.
+
+```typescript
+        <button onClick={() => changeDoc((d) => d.count = (d.count || 0) + 1)}>
+          count is { doc && doc.count ? doc.count : 0 }
+        </button>
+```
+
+Go ahead and try this out. Open a second (or third) tab with the same URL and see how as you click the counter in any tab, the others update.
+
+If you close all the tabs and reopen them, the counter value is preserved.
+
+Congratulations! You have a working Automerge-backed React app with live local synchronization. How does it work? We'll learn through some experimentation in the next section.
+
+## Collaborating over the internet
+
+<!-- peter's notes 
+
+we might be hitting our 5m quota already here!
+- storage should maybe go first because we can just look in the indexeddb
+- networking we can watch the network panel to see messages going out after we add BrowserWebsocketClientAdapter
+- we could also show adding a local sync server, and we should talk about the sharePolicy
+
+stuff not covered here that we should consider for the tutorial:
+- creating docs & using links (and when to use >1 doc)
+- ephemeral messaging
+- a survey of data types: arrays, maps, counters, text... rich text?
+- svelte / vanilla JS examples
+
+-->
+
 
 The handle we have created has a URL, we can access that with `DocHandle.url`. Now, in a second process (such as in another tab) we can do this:
 
