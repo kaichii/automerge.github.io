@@ -25,7 +25,7 @@ $ yarn
 Next, we'll add some automerge dependencies for the project. We'll introduce each of these libraries as they come up in the tutorial.
 
 ```bash
-yarn add @automerge/automerge-repo @automerge/automerge-repo-react-hooks @automerge/automerge-repo-network-broadcastchannel @automerge/automerge-repo-storage-indexeddb vite-plugin-wasm
+yarn add @automerge/automerge @automerge/automerge-repo @automerge/automerge-repo-react-hooks @automerge/automerge-repo-network-broadcastchannel @automerge/automerge-repo-storage-indexeddb vite-plugin-wasm
 ```
 
 Note, part of Automerge is delivered by WebAssembly. This technology has been around since 2017 but browser module import syntax still varies between bundlers. We're using `vite-plugin-wasm` to teach Vite how to import WebAssembly modules, but we also need to do a little extra setup in a config file.
@@ -69,9 +69,10 @@ The central concept of Automerge is one of documents. An Automerge document is a
 To create or find Automerge documents, we'll use a Repo. The Repo (short for repository) keeps track of all the documents you load and makes sure they're properly synchronized and stored. Let's go ahead and make one. Add the following imports to `src/main.tsx`:
 
 ```typescript
-import { Repo } from '@automerge/automerge-repo'
+import { isValidAutomergeUrl, Repo } from '@automerge/automerge-repo'
 import { BroadcastChannelNetworkAdapter } from '@automerge/automerge-repo-network-broadcastchannel'
 import { IndexedDBStorageAdapter } from "@automerge/automerge-repo-storage-indexeddb"
+import * as A from "@automerge/automerge"
 ```
 
 Next, 
@@ -93,7 +94,13 @@ Now that we have the repo, we want to either create a document if we don't have 
 
 ```typescript
 const rootDocUrl = `${document.location.hash.substr(1)}`
-const handle = isValidAutomergeUrl(rootDocUrl) ? repo.find(rootDocUrl) : repo.create()
+let handle
+if (isValidAutomergeUrl(rootDocUrl)) {
+    handle = repo.find(rootDocUrl)
+} else {
+    handle = repo.create<{counter?: A.Counter}>()
+    handle.change(d => d.counter = new A.Counter())
+}
 const docUrl = document.location.hash = handle.url
 window.handle = handle // we'll use this later for experimentation
 ```
@@ -107,7 +114,7 @@ The main way of interacting with a Repo is through `DocHandles`, which allow you
 Because we just created this document, it won't have any data in it. Let's start by initializing a counter. Run the following command in your Chrome debugger.
 
 ```typescript
-handle.change(d => { d.counter = 10 })
+handle.change(d => { d.counter.increment(10) })
 ```
 
 `DocHandle.change` allows you to modify the document managed by a `DocHandle` and takes care of storing new changes and notifying any peers of new changes.
@@ -142,14 +149,22 @@ and also add another import line:
 import { RepoContext } from '@automerge/automerge-repo-react-hooks'
 ```
 
-Inside `App.tsx`, change the first few lines to these:
+Inside `App.tsx`, add these imports:
+
+```typescript
+import {AutomergeUrl} from '@automerge/automerge-repo'
+import {useDocument} from '@automerge/automerge-repo-react-hooks'
+import * as A from "@automerge/automerge"
+```
+
+and change the first few lines to these:
 
 ```typescript
 interface CounterDoc {
-  count: number
+  counter: A.Counter
 }
 
-function App(docUrl: AutomergeUrl) {
+function App({docUrl}: {docUrl: AutomergeUrl}) {
   const [doc, changeDoc] = useDocument<CounterDoc>(docUrl)
 ```
 
@@ -158,8 +173,8 @@ Now you've got access to the document in a more native React-style way: a hook t
 Our last step here is to change our code to use these new values by replacing how we render the `button` element.
 
 ```typescript
-        <button onClick={() => changeDoc((d) => d.count = (d.count || 0) + 1)}>
-          count is { doc && doc.count ? doc.count : 0 }
+        <button onClick={() => changeDoc((d) => d.counter.increment(1))}>
+          count is { doc && doc.counter.value }
         </button>
 ```
 
