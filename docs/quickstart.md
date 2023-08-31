@@ -25,7 +25,13 @@ $ yarn
 Next, we'll add some automerge dependencies for the project. We'll introduce each of these libraries as they come up in the tutorial.
 
 ```bash
-yarn add @automerge/automerge @automerge/automerge-repo @automerge/automerge-repo-react-hooks @automerge/automerge-repo-network-broadcastchannel @automerge/automerge-repo-storage-indexeddb vite-plugin-wasm
+yarn add @automerge/automerge \
+  @automerge/automerge-repo \
+  @automerge/automerge-repo-react-hooks \
+  @automerge/automerge-repo-network-broadcastchannel \
+  @automerge/automerge-repo-storage-indexeddb \
+  vite-plugin-wasm \
+  vite-plugin-top-level-await
 ```
 
 Note, part of Automerge is delivered by WebAssembly. This technology has been around since 2017 but browser module import syntax still varies between bundlers. We're using `vite-plugin-wasm` to teach Vite how to import WebAssembly modules, but we also need to do a little extra setup in a config file.
@@ -37,9 +43,10 @@ Hold your nose and paste this into a file at the root of the project called `vit
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import wasm from "vite-plugin-wasm"
+import topLevelAwait from "vite-plugin-top-level-await"
 
 export default defineConfig({
-  plugins: [wasm(), react()],
+  plugins: [topLevelAwait(), wasm(), react()],
 
   worker: {
     format: "es",
@@ -72,7 +79,7 @@ To create or find Automerge documents, we'll use a Repo. The Repo (short for rep
 import { isValidAutomergeUrl, Repo } from '@automerge/automerge-repo'
 import { BroadcastChannelNetworkAdapter } from '@automerge/automerge-repo-network-broadcastchannel'
 import { IndexedDBStorageAdapter } from "@automerge/automerge-repo-storage-indexeddb"
-import * as A from "@automerge/automerge"
+import {next as A} from "@automerge/automerge" //why `next`? See the the "next" section of the conceptual overview
 ```
 
 Next, 
