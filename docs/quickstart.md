@@ -6,6 +6,8 @@ sidebar_position: 1
 
 It's easy to build a local-first web application with real-time synchronization using Automerge. In this quickstart, we'll start with the standard `yarn create vite` example Typescript application and use Automerge to turn it into a simple local-first application.
 
+All the code here can be found at the [automerge-repo-quickstart](https://github.com/automerge/automerge-repo-quickstart) repo.
+
 Let's begin.
 
 ## Setup
