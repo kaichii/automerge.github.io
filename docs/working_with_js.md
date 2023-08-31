@@ -51,5 +51,17 @@ If for whatever reason you can't use `@automerge/automerge/next` then you can do
 import {next as A} from "@automerge/automerge"
 ```
 
+## How we got here
 
+### Automerge Classic
+
+The first version of automerge was implemented in pure javascript and is what we now call automerge Classic. You can find it [on NPM](https://www.npmjs.com/package/automerge) and [GitHub](https://github.com/automerge/automerge-classic). This project went through several iterations which changed quite dramatically.
+
+### `@automerge/automerge-wasm` and `@automerge/automerge`
+
+More recently we rewrote automerge in Rust and deploy it to javascript by compiling to a wasm package at [`@automerge/automerge-wasm`](https://www.npmjs.com/package/@automerge/automerge-wasm). This wasm package is something we currently consider to be an implementation detail and should not be depended on by third parties. The `@automerge/automerge` package offers a very similar API to the original `automerge` package but implemented by forwarding logic to `@automerge/automerge`. It is consequently much faster.
+
+### `automerge-repo`
+
+The core automerge libraries (both the original classic library and the WASM implementation) offer a compact storage format and a network agnostic sync protocol, but they don't actually do the work of wiring these things up to real storage engines (such as filesystems) or transports (such as websockets). `automerge-repo` implements all of this plumbing and is how we recommend using automerge going forward.
 
