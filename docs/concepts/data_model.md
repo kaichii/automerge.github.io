@@ -16,10 +16,10 @@ The types in automerge are:
     * IEEE 754 64 bit floating point numbers
     * Unsigned integers
     * Signed integers
-    * Booleans
-    * Strings
+    * Booleans Strings
     * Timestamps
     * Counters
+    * Byte arrays
 
 How these types map to language constructs depends on the library you are using. See [below](#javascript-language-mapping) for how this works in Javascript.
 
@@ -56,7 +56,7 @@ Counters are a simple CRDT which just merges by adding all concurrent operations
 
 ## Javascript language mapping
 
-The mapping to javascript is accomplished with the use of proxies. This means that in the javascript library maps appear as `object`s and lists appear as `Array`s. There is only one numeric type in javascript - `number` - so the javascript library guesses a bit. If you insert a numeric value into the document it will be inserted as an integer, otherwise it will be a floating point value.
+The mapping to javascript is accomplished with the use of proxies. This means that in the javascript library maps appear as `object`s and lists appear as `Array`s. There is only one numeric type in javascript - `number` - so the javascript library guesses a bit. If you insert a javascript `number` for which [`Number.isInteger`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger) returns `true` then the number will be inserted as an integer, otherwise it will be a floating point value.
 
 How `Text` and `String` are represented will depend on whether you are using [the `next` API](/docs/working_with_js#the-next-api)
 
@@ -64,4 +64,63 @@ Timestamps are represented as javascript `Date`s.
 
 Counters are represented as instances of the `Counter` class.
 
+Putting it all together, here's an example of an automerge document containing all the value types:
 
+```typescript
+import  * as A  from "@automerge/automerge/next"
+
+let doc = A.from({
+    map: { 
+        key: "value",
+        nested_map: {key: "value"},
+        nested_list: [1]
+    },
+    list: ["a", "b", "c", {nested: "map"}, ["nested list"]],
+    // Note we are using the `next` API for text, so text sequences are strings
+    text: "some text",
+    // In the `next` API non mergable strings are instances of `RawString`.
+    // You should generally not need to use these. They are retained for backwards
+    // compatibility
+    raw_string: new A.RawString("rawstring"), 
+    integer: 1,
+    float: 2.3,
+    boolean: true,
+    bytes: new Uint8Array([1, 2, 3]),
+    date: new Date(),
+    counter: new A.Counter(1),
+    none: null,
+})
+
+doc = A.change(doc, d => {
+    // Insert 'Hello' at the begnning of the string
+    A.splice(d, ["text"], 0, 0, "Hello ")
+    d.counter.increment(20)
+    d.map.key = "new value"
+    d.map.nested_map.key = "new nested value"
+    d.list[0] = "A"
+    d.list.insertAt(0, "Z")
+    d.list[4].nested = "MAP"
+    d.list[5][0] = "NESTED LIST"
+})
+
+console.log(doc)
+
+// Prints
+// {
+//   map: {
+//     key: 'new value',
+//     nested_map: { key: 'new nested value' },
+//     nested_list: [ 1 ]
+//   },
+//   list: [ 'Z', 'A', 'b', 'c', { nested: 'MAP' }, [ 'NESTED LIST' ] ],
+//   text: 'Hello world',
+//   raw_string: RawString { val: 'rawstring' },
+//   integer: 1,
+//   float: 2.3,
+//   boolean: true,
+//   bytes: Uint8Array(3) [ 1, 2, 3 ],
+//   date: 2023-09-11T13:35:12.229Z,
+//   counter: Counter { value: 21 },
+//   none: null
+// }
+```

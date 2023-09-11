@@ -4,6 +4,12 @@ sidebar_position: 3
 
 # Merging
 
+:::info
+
+It isn't important to understand this section to use automerge. You can just let automerge handle merging for you. But it may be interesting to understand.
+
+:::
+
 How does automerge merge concurent changes? Well, let's think about what kinds of concurrent changes are possible. Automerge documents always carry their history with them, so the way to think about two concurrent versions of a document is as the set of changes since some common ancestor.
 
 ```mermaid
@@ -32,7 +38,7 @@ Note that "randomly choose" means "choose one arbitrarily, but in such a way tha
 
 ## List merge rules
 
-To understand the way lists merge you need to know a little about how the operations on lists are expressed. Every element in a list has an ID and operations reference that ID. When you update an index in a list (using `list[<index>] = <value>` in a `change` function in the JS library) the operation which is created references the ID of the element currently at `index`. Likewise when you delete an element from a list the delete operation which is created references the deleted element at the given index. When you _insert_ elements into a list the insert operation references the ID of the element you are inserting after
+To understand the way lists merge you need to know a little about how the operations on lists are expressed. Every element in a list has an ID and operations on the list reference these IDs. When you update an index in a list (using `list[<index>] = <value>` in a `change` function in the JS library) the operation which is created references the ID of the element currently at `index`. Likewise when you delete an element from a list the delete operation which is created references the deleted element at the given index. When you _insert_ elements into a list the insert operation references the ID of the element you are inserting after
 
 In the following then  when we say "index $x$" that really means "the ID of the element at index $x$ at the time the operation was created".
 
@@ -48,8 +54,6 @@ Note that inserting a run of elements will maintain the insertion order of the r
 |      B       |       `A`         |  `b`  |
 
 The operations after inserting on `A` are
-
-On `A`
 
 | Operation ID | Reference element | Value |
 | -------------|-------------------|-------|
