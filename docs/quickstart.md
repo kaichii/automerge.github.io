@@ -36,9 +36,7 @@ yarn add @automerge/automerge \
   vite-plugin-top-level-await
 ```
 
-Note, part of Automerge is delivered by WebAssembly. This technology has been around since 2017 but browser module import syntax still varies between bundlers. We're using `vite-plugin-wasm` to teach Vite how to import WebAssembly modules, but we also need to do a little extra setup in a config file.
-
-Hold your nose and paste this into a file at the root of the project called `vite.config.ts`. We'll all look forward to removing this file in the future.
+Because Vite support for WebAssembly modules (used by Automerge) currently requires configuring a plugin, replace `vite.config.ts` with the following:
 
 ```typescript
 // vite.config.ts
@@ -84,8 +82,6 @@ import { IndexedDBStorageAdapter } from "@automerge/automerge-repo-storage-index
 import {next as A} from "@automerge/automerge" //why `next`? See the the "next" section of the conceptual overview
 ```
 
-Next, 
-
 ## Initializing a repository
 
 Before we can start finding or creating documents, we'll need a repo. Here, we create one that can synchronize with other tabs using a sort of pseudo-network built into the browser that allows communication between tabs with the same shared origin: the BroadcastChannel.
@@ -101,6 +97,8 @@ const repo = new Repo({
 
 Now that we have the repo, we want to either create a document if we don't have one already or we want to load a document. To keep things simple, we'll check the URL hash for a document ID, and if we don't find one, we'll start a new document and set it in the hash.
 
+Add this code right after the repo initialization code.
+
 ```typescript
 const rootDocUrl = `${document.location.hash.substr(1)}`
 let handle
@@ -114,13 +112,19 @@ const docUrl = document.location.hash = handle.url
 window.handle = handle // we'll use this later for experimentation
 ```
 
-(Your application will probably handle routing differently, but this is enough to get started.)
+A real application would probably handle routing differently, but this is enough to get started.
 
 ## Working with the document
 
 The main way of interacting with a Repo is through `DocHandles`, which allow you to read data from a document or make changes to it and which emit `"change"` events whenever the document changes -- either through local actions or over the network.
 
-Because we just created this document, it won't have any data in it. Let's start by initializing a counter. Run the following command in your Chrome debugger.
+Now that we have a document handle stuck onto the window, let's experiment with it. Start your application now with:
+
+`$ yarn dev`
+
+You won't see any changes from the default example application on screen, but we've attached an Automerge document to the `window` object, which makes it conveniently available in the Chrome debugger. 
+
+Your new document is empty, because we just created it. Let's start by initializing a counter. Run the following command in your Chrome debugger.
 
 ```typescript
 handle.change(d => { d.counter.increment(10) })
@@ -128,19 +132,19 @@ handle.change(d => { d.counter.increment(10) })
 
 `DocHandle.change` allows you to modify the document managed by a `DocHandle` and takes care of storing new changes and notifying any peers of new changes.
 
-Next, run this code to see the contents of your document.
+Next, run this code to see the contents of your document. The contents will look a bit complex, but you should see a counter with a value of 10 if you poke around.
 
 ```typescript
 handle.docSync()
 ```
 
-The `DocHandle.docSync()` method gets the current value of the document synchronously or throws an error if the document is not ready. A document might not be ready if you are in the process of requesting it from the network, in which case you might use `await doc1.doc()` to get the value asynchronously. In this case we created the document using `Repo.create`, so we know it is ready.
+Calling `DocHandle.docSync()` return the current value of the document synchronously, or returns undefined if the document is unavailable either because it is still loading, or because it can't be found. To avoid this problem, prefer the asynchronous form: `await handle.doc()`. If you want to render loading states differently from an unavailable state, you can inspect `handle.state` and branch accordingly.
 
 ## Updating your app to use Automerge
 
 We've already created or fetched our initial document via `main.tsx`, but usually when when we want to work with a document in a React application, we will refer to it by URL. Let's start by editing the call signature for `App.tsx` to pass in the URL for your newly created document, and then make it available to your component with the `useDocument` hook.
 
-In `main.tsx`, modify the `React.render()` call to look like this:
+We also need to make the `repo` object we created available throughout the application, so we use a React Context provider for that. In `main.tsx`, modify the `React.render()` call to look like this:
 
 ```typescript
 ReactDOM.createRoot(document.getElementById('root')!).render(
