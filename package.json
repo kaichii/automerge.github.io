@@ -14,9 +14,6 @@
     "write-heading-ids": "docusaurus write-heading-ids"
   },
   "dependencies": {
-    "@automerge/automerge": "2.1.0-alpha.12",
-    "@automerge/automerge-repo": "1.0.0-alpha.4",
-    "@automerge/automerge-wasm": "^0.1.23",
     "@docusaurus/core": "2.4.1",
     "@docusaurus/preset-classic": "2.4.1",
     "@docusaurus/theme-mermaid": "^2.4.1",
