@@ -1,6 +1,3 @@
----
-sidebar_position: 2
----
 
 # Document Data Model
 
@@ -10,8 +7,8 @@ The types in automerge are:
 
 * Composite types
     * Maps
-    * List
-    * Text
+    * [List](lists)
+    * [Text](./text)
 * Scalar (non-composite) types:
     * IEEE 754 64 bit floating point numbers
     * Unsigned integers
@@ -21,9 +18,7 @@ The types in automerge are:
     * Counters
     * Byte arrays
 
-How these types map to language constructs depends on the library you are using. See [below](#javascript-language-mapping) for how this works in Javascript.
-
-Some notes follow on the non-obvious data types.
+See [below](#javascript-language-mapping) for how these types map to JavaScript types.
 
 ## Maps
 

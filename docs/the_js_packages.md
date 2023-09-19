@@ -1,13 +1,13 @@
 ---
 sidebar_position: 2
 ---
-# Working with Javascript
+# The JavaScript packages
 
 The javascript API has been through several iterations and is currently split over a few libraries. This page describes how all these pieces fit together.
 
 ## Recommended Usage
 
-If you just want to know how to use Automerge in greenfield applications, here'show the library is intended to be used:
+If you just want to know how to use Automerge in greenfield applications, here's how the library is intended to be used:
 
 Install both the `@automerge/automerge` and `@automerge/automerge-repo` packages. Then install the networking and storage plugins you need (typically `@automerge/automerge-repo-network-*` and `@automerge/automerge-repo-storage-*`) packages. Take a look at the cookbook for examples of different ways of using these.
 
@@ -59,9 +59,9 @@ The first version of automerge was implemented in pure javascript and is what we
 
 ### `@automerge/automerge-wasm` and `@automerge/automerge`
 
-More recently we rewrote automerge in Rust and deploy it to javascript by compiling to a wasm package at [`@automerge/automerge-wasm`](https://www.npmjs.com/package/@automerge/automerge-wasm). This wasm package is something we currently consider to be an implementation detail and should not be depended on by third parties. The `@automerge/automerge` package offers a very similar API to the original `automerge` package but implemented by forwarding logic to `@automerge/automerge`. It is consequently much faster.
+More recently we rewrote automerge in Rust and deployed it to javascript by compiling to a wasm package at [`@automerge/automerge-wasm`](https://www.npmjs.com/package/@automerge/automerge-wasm). This wasm package is something we currently consider to be an implementation detail and should not be depended on by third parties. The `@automerge/automerge` package offers a very similar API to the original `automerge` package but implemented by forwarding logic to `@automerge/automerge`. It is consequently much faster.
 
-### `automerge-repo`
+### `@automerge/automerge-repo`
 
 The core automerge libraries (both the original classic library and the WASM implementation) offer a compact storage format and a network agnostic sync protocol, but they don't actually do the work of wiring these things up to real storage engines (such as filesystems) or transports (such as websockets). `automerge-repo` implements all of this plumbing and is how we recommend using automerge going forward.
 
