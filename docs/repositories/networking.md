@@ -10,7 +10,7 @@ There are many ways to talk to other peers. In `automerge-repo` this is captured
 
 ## Websockets
 
-The websocket `NetworkAdapter` has two parts. This is because the websocket protocol requires a server and a client. The parts are named [`NodeWSServerAdapter`] and [`BrowserWebsocketClientAdapter`], but don't take these names too seriously, they will both work in a browser or in Node.
+The websocket `NetworkAdapter` has two parts. This is because the websocket protocol requires a server and a client. The parts are named `NodeWSServerAdapter` and `BrowserWebsocketClientAdapter`, but don't take these names too seriously, they will both work in a browser or in Node.
 
 ### Server
 

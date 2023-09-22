@@ -78,4 +78,3 @@ If all we care about is whether the document is ready then we can use a few diff
 * `DocHandle.docSync()` is a synchronous method which returns the value of the document if it is ready. This method _will throw if the handle is not ready_. Therefore you should guard calls to `docSync` with calls to `isReady`
 
 Once the document is ready the value of the document (either `DocHandle.doc()` or `DocHandle.docSync()`) will be `undefined` if the document was unavailable, but otherwise will be an automerge document.
-
