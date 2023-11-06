@@ -111,7 +111,7 @@ In this latter example we use `DocHandle.whenReady`, which returns a promise whi
 > handle.change(d => d.foo = "bar")
 ```
 
-`DocHandle.on("change")` registers a callback that is called whenever the document is modified – either due to a local change or a sync message being received from another peer.
+The `Repo` calls `DocHandle.on("change")` whenever the document is modified – either due to a local change or a sync message being received from another peer.
 
 ```
 > const handle = repo.find("automerge:4CkUej7mAYnaFMfVnffDipc4Mtvn")
