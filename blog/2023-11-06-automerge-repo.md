@@ -2,7 +2,7 @@
 
 Today we are announcing our new library, [`automerge-repo`](https://github.com/automerge/automerge-repo), which makes it vastly easier to build local-first applications with Automerge.
 
-For those new to this idea: local-first applications are a way of building software that allows both real-time collaboration (think Google Docs) and offline working (think Git). They work by storing the user's data locally, on their own device, and syncing it with collaborators in the background. You can read more about the motivation for local-first software [in our essay](https://inkandswitch.com/local-first/), or you can watch a [talk introducing the idea](https://www.youtube.com/watch?v=PHz17gwiOc8).
+For those new to this idea: local-first applications are a way of building software that allows both real-time collaboration (think Google Docs) and offline working (think Git). They work by storing the user's data locally, on their own device, and syncing it with collaborators in the background. You can read more about the motivation for local-first software [in our essay](https://inkandswitch.com/local-first/), or watch a [talk introducing the idea](https://www.youtube.com/watch?v=PHz17gwiOc8).
 
 A challenge in local-first software is how to merge edits that were made independently on different devices, and [CRDTs](https://crdt.tech/) were developed to solve this problem. Automerge is a CRDT implementation, and it is fairly mature now. In fact, we wrote this blog post using it! The data structure is quite low-level though, and Automerge-Core has no opinion about how networking or storage should be done. Often, the first thing developers would ask us after discovering Automerge was how to connect it into an actual application.
 
