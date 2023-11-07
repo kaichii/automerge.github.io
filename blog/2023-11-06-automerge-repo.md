@@ -4,15 +4,15 @@ Today we are announcing our new library, [`automerge-repo`](https://github.com/a
 
 For those new to this idea: local-first applications are a way of building software that allows both real-time collaboration (think Google Docs) and offline working (think Git). They work by storing the user's data locally, on their own device, and syncing it with collaborators in the background. You can read more about the motivation for local-first software [in our essay](https://inkandswitch.com/local-first/), or watch a [talk introducing the idea](https://www.youtube.com/watch?v=PHz17gwiOc8).
 
-A challenge in local-first software is how to merge edits that were made independently on different devices, and [CRDTs](https://crdt.tech/) were developed to solve this problem. Automerge is a CRDT implementation, and it is fairly mature now. In fact, we wrote this blog post using it! The data structure is quite low-level though, and Automerge-Core has no opinion about how networking or storage should be done. Often, the first thing developers would ask us after discovering Automerge was how to connect it into an actual application.
+A challenge in local-first software is how to merge edits that were made independently on different devices, and [CRDTs](https://crdt.tech/) were developed to solve this problem. Automerge is a fairly mature CRDT implementation. In fact, we wrote this blog post using it! The API is quite low-level though, and Automerge-Core has no opinion about how networking or storage should be done. Often, the first thing developers ask after discovering Automerge was how to connect it into an actual application.
 
-Our new library, `automerge-repo`, extends the collaboration engine of Automerge-Core with networking and storage adapters, and it also provides integrations with React and other UI frameworks. This means you can get to building your app straight away without without solving all the little problems like how to send binary data over a WebSocket, how often to send synchronization messages, what network format to use, or how to store data in places like the browser's IndexedDB or on the filesystem.
+Our new library, `automerge-repo`, extends the collaboration engine of Automerge-Core with networking and storage adapters, and provides integrations with React and other UI frameworks. You can get to building your app straight away by taking advantage of default implementations that solve common problems such as how to send binary data over a WebSocket, how often to send synchronization messages, what network format to use, or how to store data in places like the browser's IndexedDB or on the filesystem.
 
-If you've been intimidated by the idea of integrating Automerge into your application because of all the extra busywork involved, this library is for you. Now you can simply create a repo, point it to a sync server, and get to work on your app.
+If you've been intimidated by the effort of integrating Automerge into your application because of these choices, this library is for you. Now you can simply create a repo, point it to a sync server, and get to work on your app.
 
 ## `automerge-repo`: a simple example
 
-Let's start by taking a look at a simple example of how `automerge-repo` works. To begin, we create and configure a repository for Automerge documents.
+Let's start by taking a look at a simple example of how `automerge-repo` works. To begin, create and configure a repository for Automerge documents.
 
 ```
 const repo = new Repo({
@@ -23,15 +23,15 @@ const repo = new Repo({
 
 :::note
 
-The sync server at sync.automerge.org is publicly available, but also consequently not very reliable. You should assume that data will disappear arbitrarily and that the server might just fall over. Also, a bunch of people at Ink and Switch have SSH access so don't put anything secret there. Basically, it's good for demos and playing, but you'll need to run your own for production uses.
+The Automerge project provides a public sync server for you to experiment with `sync.automerge.org`. This is not a private instance, and as an experimental service has no reliability or data safety guarantees. Basically, it's good for demos and prototyping, but run your own sync server for production uses.
 
 :::
 
-Here, we're creating a Repo and adding a storage and network adapter to it. This tells `automerge-repo` to store all changes in an IndexedDB table called `automerge-demo` and to synchronize documents with the WebSocket server at `sync.automerge.org`. The library is designed to support a wide variety of network transports, and we include a simple client/server WebSocket adapter out of the box. Members of the community are already adding support for other transports, such as WebRTC.
+The code in the example above creates a repository and adds a storage and network adapter to it. It tells `automerge-repo` to store all changes in an IndexedDB table called `automerge-demo` and to synchronize documents with the WebSocket server at `sync.automerge.org`. The library is designed to support a wide variety of network transports, and we include a simple client/server WebSocket adapter out of the box. Members of the community are already adding support for other transports, such as WebRTC.
 
 In this example we're connecting to the public test server hosted by the Automerge team, but you can also run your own sync server. In fact, our [sync server](https://github.com/automerge/automerge-repo-sync-server) runs almost the same code as above, but with a different network and storage adapter.
 
-Next, let's create a document and make some changes to it:
+Next, create a document and make some changes to it:
 
 ```
    > const handle = repo.create()
@@ -39,7 +39,7 @@ Next, let's create a document and make some changes to it:
    > console.log(handle.url)
    automerge:2j9knpCseyhnK8izDmLpGP5WMdZQ
 ```
-This prints a URL. On another computer or in another browser, you can load this document using the same URL:
+The code logs a URL to the document you created. On another computer, or in another browser, you could load this document using the same URL, as shown below:
 
 ```
    > const handle = repo.find("automerge:2j9knpCseyhnK8izDmLpGP5WMdZQ")
@@ -55,7 +55,7 @@ Let's go into a bit more detail. For full documentation please see [the docs](ht
 
 ### Repo
 
-You create a repo by initializing it with an optional storage plugin and any number of network adapters. These are the options for initializing a repo:
+Create a repo by initializing it with an optional storage plugin and any number of network adapters. These are the options for initializing a repo:
 
 ```
 export interface RepoConfig {
@@ -70,19 +70,20 @@ export interface RepoConfig {
 }
 ```
 
-Even though we call each device a "peer", `automerge-repo` actually works with both client-server transports and peer-to-peer networks.
+Don't let the usage of "peer" confuse you into thinking this is limited to peer to peer connectivity, `automerge-repo` works with both client-server and peer-to-peer network transports.
 
 The main methods on Repo are `find(url)` and `create()`, both of which return a `DocHandle` you can work with.
 
 ### Handle & Automerge URLs
 
-A `DocHandle` is a reference to an Automerge document that is synced and stored by the `Repo` from which you obtained the handle. This means that any changes you make to the document will be saved to storage and synced with peers, and likewise you can listen for changes received over the network.
+A `DocHandle` is a reference to an Automerge document that a `Repo` syncs and stores . The `Repo` instance saves any changes you make to the document and syncs with connected peers. Likewise, you can listen over the network for to a `Repo` for any changes it received.
 
-Each `DocHandle` has a `.url` property. This is a string of the form `automerge:<base58 encoded bytes>`, which uniquely identifies a document. Once you have a URL you can use it to request the document from other peers.
+Each `DocHandle` has a `.url` property. This is a string which uniquely identifies a document in the form `automerge:<base58 encoded bytes>`. Once you have a URL you can use it to request the document from other peers.
 
 ### `DocHandle.doc()` and `DocHandle.docSync()`
 
-These two methods return the current state of the document. The difference is that `doc()` is an async method that resolves when the document has been loaded from storage or retrieved from a peer (whichever happens first), while `docSync()` is a synchronous method that assumes the document is already available.
+These two methods return the current state of the document. `doc()` is an asynchronous method that resolves when a repository loads the document from storage or retrieves it from a peer (whichever happens first), and `docSync()` is a synchronous method that assumes the document is already available.
+The examples below illustrate asynchronously loading a document or synchronously loading a document and then interacting with it:
 
 ```
 > const handle = repo.find("automerge:2j9knpCseyhnK8izDmLpGP5WMdZQ")
@@ -99,11 +100,11 @@ Or
 })
 ```
 
-In this latter example we use `DocHandle.whenReady`, which returns a promise which resolves when the document has either been loaded from storage or fetched from another peer in the network.
+In this latter example we use `DocHandle.whenReady`, which returns a promise that the repository resolves when it loads a document from storage or fetches it from another peer in the network.
 
 ### `change()` and `on("change")`
 
-`DocHandle.change` allows you to modify a document.
+Use `DocHandle.change` when you modify a document.
 
 ```
 > const handle = repo.find("automerge:2j9knpCseyhnK8izDmLpGP5WMdZQ")
@@ -128,7 +129,7 @@ The `Repo` calls `DocHandle.on("change")` whenever the document is modified – 
 
 ### React Integration
 
-[`@automerge/automerge-repo-react-hooks`](https://www.npmjs.com/package/@automerge/automerge-repo-react-hooks) makes it easy to use `automerge-repo` in a React application. Once you've constructed a `Repo` you can make it available to your React application using [`RepoContext`](https://automerge.org/automerge-repo/variables/_automerge_automerge_repo_react_hooks.RepoContext.html) and you can then call `useHandle` to obtain a `DocHandle`:
+[`@automerge/automerge-repo-react-hooks`](https://www.npmjs.com/package/@automerge/automerge-repo-react-hooks) makes it easy to use `automerge-repo` in a React application. Once you've constructed a `Repo` you can make it available to your React application using [`RepoContext`](https://automerge.org/automerge-repo/variables/_automerge_automerge_repo_react_hooks.RepoContext.html). Once available, call `useHandle` to obtain a `DocHandle`:
 
 ```
 function TodoList(listUrl: AutomergeUrl) {
@@ -137,7 +138,7 @@ function TodoList(listUrl: AutomergeUrl) {
 }
 ```
 
-Note that when changes are received over the network or made locally, the old Automerge document remains immutable, and any modified parts of the document get new objects. This means that React will only re-render the parts of the UI that depend on a part of the document that has changed.
+Note that when `Repo` receives changes over the network or registers local changes, the original Automerge document remains immutable, and any modified parts of the document get new objects. This means that React will only re-render the parts of the UI that depend on a part of the document that has changed.
 
 ### Svelte Integration
 
@@ -172,19 +173,19 @@ You can extend `automerge-repo` by writing new storage or network adapters.
 
 ### Storage Adapters
 
-A storage adapter represents some kind of backend that will be used to store the data in a repo. Storage adapters can be implemented for any key/value store that allows you to query a range of keys with a given prefix. There is no concurrency control required (that's implemented in `automerge-repo`) so you can safely have multiple repos pointing at the same storage. You could implement an adapter on top of Redis, for example.
+A storage adapter represents some kind of backend that stores the data in a repo. Storage adapters can be implemented for any key/value store that allows you to query a range of keys with a given prefix. There is no concurrency control required (that's implemented in `automerge-repo`) so you can safely have multiple repos pointing at the same storage. For example, you could implement an adapter on top of Redis.
 
-There are already storage adapters for IndexedDB and the file system (on Node).
+The `automerge-repo` library provides storage adapters for IndexedDB and the file system (on Node).
 
 ### Network Adapters
 
-A network adapter represents a way of connecting to other peers. Network adapters raise events when a new peer is discovered or when a message is recieved, and they implement a `send` method for transmitting messages to another peer. `automerge-repo` assumes a reliable, in-order transport for each peer; as long as you can provide this (e.g. using a TCP connection), you can implement an adapter. You could implement an adapter for [BLE](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy), for example.
+A network adapter represents a way of connecting to other peers. Network adapters raise events when a new peer is discovered or when a message is recieved, and implement a `send` method for transmitting messages to another peer. `automerge-repo` assumes a reliable, in-order transport for each peer; as long as you can provide this (e.g. using a TCP connection), you can implement an adapter. You could implement an adapter for [BLE](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy), for example.
 
-There are already network adapters for WebSocket, MessageChannel, and BroadcastChannel.
+The `automerge-repo` library provides network adapters for WebSocket, MessageChannel, and BroadcastChannel.
 
 ### Other languages/platforms
 
-This release of `automerge-repo` is just for javascript. Automerge is a multi-language library though and there are efforts under way to implement `automerge-repo` on other platforms. The most mature of these is [`automerge-repo-rs`](https://github.com/automerge/automerge-repo-rs). Contributions are very welcome, please reach out if you're starting to develop `automerge-repo` for a new platform.
+This release of `automerge-repo` is just for javascript. Automerge is a multi-language library though and there are efforts under way to implement `automerge-repo` on other platforms. The most mature of these is [`automerge-repo-rs`](https://github.com/automerge/automerge-repo-rs). We welcome contributions and please reach out if you're starting to develop `automerge-repo` for a new platform.
 
 ## Beta Quality
 
