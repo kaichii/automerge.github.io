@@ -21,15 +21,16 @@ const repo = new Repo({
 })
 ```
 
+The code in the example above creates a repository and adds a storage and network adapter to it. It tells `automerge-repo` to store all changes in an IndexedDB table called `automerge-demo` and to synchronize documents with the WebSocket server at `sync.automerge.org`. The library is designed to support a wide variety of network transports, and we include a simple client/server WebSocket adapter out of the box. Members of the community are already adding support for other transports, such as WebRTC.
+
+In this example we're connecting to the public test server hosted by the Automerge team, but you can also run your own sync server. In fact, our [sync server](https://github.com/automerge/automerge-repo-sync-server) runs almost the same code as above, but with a different network and storage adapter.
+
 :::note
 
 The Automerge project provides a public sync server for you to experiment with `sync.automerge.org`. This is not a private instance, and as an experimental service has no reliability or data safety guarantees. Basically, it's good for demos and prototyping, but run your own sync server for production uses.
 
 :::
 
-The code in the example above creates a repository and adds a storage and network adapter to it. It tells `automerge-repo` to store all changes in an IndexedDB table called `automerge-demo` and to synchronize documents with the WebSocket server at `sync.automerge.org`. The library is designed to support a wide variety of network transports, and we include a simple client/server WebSocket adapter out of the box. Members of the community are already adding support for other transports, such as WebRTC.
-
-In this example we're connecting to the public test server hosted by the Automerge team, but you can also run your own sync server. In fact, our [sync server](https://github.com/automerge/automerge-repo-sync-server) runs almost the same code as above, but with a different network and storage adapter.
 
 Next, create a document and make some changes to it:
 
@@ -125,7 +126,7 @@ The `Repo` calls `DocHandle.on("change")` whenever the document is modified – 
 
 ## Integrations
 
-`automerge-repo` provides a set of primitives that you can use to build a wide range of applications. To make this easier, we have built integrations with a few common UI frameworks (and you can easily add further integrations).
+`automerge-repo` provides a set of primitives that you can use to build a wide range of applications. To make this easier, we have built integrations with a few common UI frameworks. You can easily add further integrations and we welcome contributions which integrate with popular frameworks!
 
 ### React Integration
 
